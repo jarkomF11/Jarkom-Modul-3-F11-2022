@@ -79,3 +79,35 @@ http_access allow AVAILABLE_WORKING_2
 http_access allow AVAILABLE_WORKING_3
 http_access deny all
 ```
+
+### Soal 4
+Agar menghemat penggunaan, akses internet dibatasi dengan kecepatan maksimum 128 Kbps pada setiap host (Kbps = kilobit per second; lakukan pengecekan pada tiap host, ketika 2 host akses internet pada saat bersamaan, keduanya mendapatkan speed maksimal yaitu 128 Kbps)
+
+### Jawaban
+Buat file bernama acl-bandwidth.conf di folder squid `nano /etc/squid/acl-bandwidth.conf` lalu masukkan
+
+```
+delay_pools 1
+delay_class 1 1
+delay_access 1 allow all
+delay_parameters 1 16000/16000
+```
+
+Kemudian edit file `/etc/squid/squid.conf`
+
+```
+include /etc/squid/acl.conf
+include /etc/squid/acl-bandwidth.conf
+
+http_port 8080
+visible_hostname Berlint
+
+http_access allow AVAILABLE_WORKING_1
+http_access allow AVAILABLE_WORKING_2
+http_access allow AVAILABLE_WORKING_3
+http_access deny all
+```
+
+Coba kecepatan internet dengan speedtest
+
+![image](images/8-4.png)
