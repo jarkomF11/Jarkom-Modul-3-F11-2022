@@ -8,6 +8,135 @@
 | 2 | Moh. Ilham Fakhri Zamzami | 5025201275 |
 | 3 | Putu Andhika Pratama | 5025201132 |
 
+## Soal 1
+
+### Soal
+Loid bersama Franky berencana membuat peta tersebut dengan kriteria WISE sebagai DNS Server, Westalis sebagai DHCP Server, Berlint sebagai Proxy Server
+
+### Jawaban
+Install package pada masing masing node
+- Westalis
+```
+apt-get update
+apt-get install isc-dhcp-server -y
+
+service isc-dhcp-server start
+```
+- Berlint
+```
+apt-get update
+apt-get install squid -y
+```
+- WISE
+```
+apt-get update
+apt-get install bind9 -y
+```
+
+Pada node Westalis, tambahkan config pada `/etc/default/isc-dhcp-server`
+```
+INTERFACES="eth0"
+```
+
+Untuk soal no 3, 4, dan 6 gunakan config `/etc/dhcp/dhcpd.conf` pada node Westalis
+```
+subnet 10.34.2.0 netmask 255.255.255.0{
+    option routers 10.34.2.1;
+}
+
+# Switch 1
+subnet 10.34.1.0 netmask 255.255.255.0 {
+    range 10.34.1.50 10.34.1.88;
+    range 10.34.1.120 10.34.1.155;
+    option routers 10.34.1.1;
+    option broadcast-address 10.34.1.255;
+    option domain-name-servers 10.34.2.2;
+    default-lease-time 350;
+    max-lease-time 6900;
+}
+
+# Switch 3
+subnet 10.34.3.0 netmask 255.255.255.0 {
+    range 10.34.3.10 10.34.3.30;
+    range 10.34.3.60 10.34.3.85;
+    option routers 10.34.3.1;
+    option broadcast-address 10.34.3.255;
+    option domain-name-servers 10.34.2.2;
+    default-lease-time 700;
+    max-lease-time 6900;
+}
+```
+
+## Soal 2
+
+### Soal
+Jadikan Ostania sebagai DHCP Relay
+
+### Jawaban
+Install package relay
+```
+apt-get update
+apt-get instal isc-dhcp-relay -y
+```
+Lalu tambahkan config pada `/etc/default/isc-dhcp-relay`
+```
+SERVERS="10.34.2.4"
+INTERFACES="eth1 eth2 eth3"
+```
+
+## Soal 3
+
+### Soal
+Client yang melalui Switch1 mendapatkan range IP dari [prefix IP].1.50 - [prefix IP].1.88 dan [prefix IP].1.120 - [prefix IP].1.155
+
+### Jawaban
+Gunakan option berikut pada `dhcpd.conf`
+```
+range 10.34.1.50 10.34.1.88;
+range 10.34.1.120 10.34.1.155;
+```    
+
+## Soal 4
+
+### Soal
+Client yang melalui Switch3 mendapatkan range IP dari [prefix IP].3.10 - [prefix IP].3.30 dan [prefix IP].3.60 - [prefix IP].3.85
+
+### Jawaban
+Gunakan option berikut pada `dhcpd.conf`
+```
+range 10.34.3.10 10.34.3.30;
+range 10.34.3.60 10.34.3.85;
+```    
+
+## Soal 5
+
+### Soal
+Client mendapatkan DNS dari WISE dan client dapat terhubung dengan internet melalui DNS tersebut.
+
+### Jawaban
+Pada node WISE, tambahkan config untuk `/etc/bind/named.conf.options`
+```
+forwarders {
+      192.168.122.1;
+};
+
+allow-query{any;};
+```
+
+## Soal 6
+
+### Soal
+Lama waktu DHCP server meminjamkan alamat IP kepada Client yang melalui Switch1 selama 5 menit sedangkan pada client yang melalui Switch3 selama 10 menit. Dengan waktu maksimal yang dialokasikan untuk peminjaman alamat IP selama 115 menit.
+
+### Jawaban
+Ubah default-lease-time dan max-lease-time di dalam `dhcpd.conf` menjadi
+```
+default-lease-time 350; # Switch 1
+default-lease-time 700; # Switch 3
+max-lease-time 6900;
+```
+
+
 ## Soal 7
 
 ### Soal
