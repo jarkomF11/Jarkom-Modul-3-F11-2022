@@ -182,7 +182,7 @@ Coba akses halaman web http://its.ac.id
 
 `lynx http://its.ac.id`
 
-### Soal 1
+### Proxy Server Soal 1
 Client hanya dapat mengakses internet diluar (selain) hari & jam kerja (senin-jumat 08.00 - 17.00) dan hari libur (dapat mengakses 24 jam penuh)
 
 ### Jawaban
@@ -190,9 +190,10 @@ Client hanya dapat mengakses internet diluar (selain) hari & jam kerja (senin-ju
 buat file baru `nano /etc/squid/acl.conf` lalu masukkan
 
 ```
-acl AVAILABLE_WORKING_1 time MTWHF 00:00-08:00
-acl AVAILABLE_WORKING_2 time MTWHF 17:00-24:00
-acl AVAILABLE_WORKING_3 time SA 00:00-24:00
+acl NOT_WORKING_1 time MTWHF 00:00-08:00
+acl NOT_WORKING_2 time MTWHF 17:00-24:00
+acl NOT_WORKING_3 time SA 00:00-24:00
+acl WORKING time MTWHF 08:00-17:00
 ```
 
 Kemudian edit file `/etc/squid/squid.conf`
@@ -203,40 +204,181 @@ include /etc/squid/acl.conf
 http_port 8080
 visible_hostname Berlint
 
-http_access allow AVAILABLE_WORKING_1
-http_access allow AVAILABLE_WORKING_2
-http_access allow AVAILABLE_WORKING_3
+http_access deny WORKING
+http_access allow all
+```
+
+### Proxy Server Soal 2
+Adapun pada hari dan jam kerja sesuai nomor (1), client hanya dapat mengakses domain loid-work.com dan franky-work.com (IP tujuan domain dibebaskan)
+
+### Jawaban
+
+edit `nano /etc/squid/acl.conf` lalu masukkan
+
+```
+acl NOT_WORKING_1 time MTWHF 00:00-08:00
+acl NOT_WORKING_2 time MTWHF 17:00-24:00
+acl NOT_WORKING_3 time SA 00:00-24:00
+acl WORKING time MTWHF 08:00-17:00
+
+acl LOID dstdomain loid-work.com
+acl FRANKY dstdomain franky-work.com
+```
+
+Kemudian edit file `/etc/squid/squid.conf`
+
+```
+include /etc/squid/acl.conf
+
+http_port 8080
+visible_hostname Berlint
+
+http_access allow WORKING LOID
+http_access allow WORKING FRANKY
+http_access deny WORKING
+http_access allow NOT_WORKING_1 !LOID
+http_access allow NOT_WORKING_1 !FRANKY
+http_access allow NOT_WORKING_2 !LOID
+http_access allow NOT_WORKING_2 !FRANKY
+http_access allow NOT_WORKING_3 !LOID
+http_access allow NOT_WORKING_3 !FRANKY
 http_access deny all
 ```
 
-### Soal 4
+Kemudian pada node WISE buat domain `loid-work.com` dan `franky-work.com` dengan mengedit file `/etc/bind/named.conf.local`
+
+```
+zone "loid-work.com" {
+  type master;
+  file "/etc/bind/loid-work/loid-work.com";
+};
+zone "franky-work.com" {
+  type master;
+  file "/etc/bind/franky-work/franky-work.com";
+};
+```
+
+buat folder loid dan franky
+
+```
+mkdir /etc/bind/loid-work
+mkdir /etc/bind/franky-work
+```
+
+Kemudian endit file `/etc/bind/loid-work/loid-work.com`
+
+```
+;
+; BIND data file for local loopback interface
+;
+$TTL    604800
+@       IN      SOA     loid-work.com.  root.loid-work.com. (
+                              2         ; Serial
+                         604800         ; Refresh
+                          86400         ; Retry
+                        2419200         ; Expire
+                         604800 )       ; Negative Cache TTL
+;
+@       IN      NS      loid-work.com.
+@       IN      A       10.34.2.2
+@       IN      AAAA    ::1
+```
+
+Edit juga file `/etc/bind/franky-work/franky-work.com`
+
+```
+;
+; BIND data file for local loopback interface
+;
+$TTL    604800
+@       IN      SOA     franky-work.com. root.franky-work.com. (
+                              2         ; Serial
+                         604800         ; Refresh
+                          86400         ; Retry
+                        2419200         ; Expire
+                         604800 )       ; Negative Cache TTL
+;
+@       IN      NS      franky-work.com.
+@       IN      A       10.34.2.2
+@       IN      AAAA    ::1
+```
+
+Buka file `/etc/apache2/sites-available/loid-work.com.conf` lalu tambahkan
+
+```
+ServerAdmin webmaster@localhost
+DocumentRoot /var/www/loid-work.com
+ServerName loid-work.com
+```
+
+Buka file `/etc/apache2/sites-available/franky-work.com.conf` lalu tambahkan
+
+```
+ServerAdmin webmaster@localhost
+DocumentRoot /var/www/franky-work.com
+ServerName franky-work.com
+```
+
+Aktifkan domain dengan `a2ensite loid-work.com` dan  `a2ensite franky-work.com`
+
+Buat folder untuk webnya
+
+```
+mkdir /var/www/loid-work.com
+mkdir /var/www/franky-work.com
+```
+
+Kemudian buat file `index.php` lalu masukkan
+
+```
+<?php
+        phpinfo();
+?>
+```
+
+Coba jalankan
+
+![image](images/8-2.png)
+
+![image](images/8-2_1.png)
+
+### Proxy Server Soal 2
+Saat akses internet dibuka, client dilarang untuk mengakses web tanpa HTTPS. (Contoh web HTTP: http://example.com)
+
+### Jawaban
+Edit file `/etc/squid/squid.conf` tambahkan
+
+```
+acl HTTPS port 443
+
+http_access deny HARI_KERJA HTTPS
+http_access deny AVAILABLE_WORKING !HTTPS
+http_access deny AVAILABLE_WORKING2 !HTTPS
+http_access deny HARI_LIBUR !HTTPS
+```
+
+### Proxy Server Soal 4 dan 5
 Agar menghemat penggunaan, akses internet dibatasi dengan kecepatan maksimum 128 Kbps pada setiap host (Kbps = kilobit per second; lakukan pengecekan pada tiap host, ketika 2 host akses internet pada saat bersamaan, keduanya mendapatkan speed maksimal yaitu 128 Kbps)
 
 ### Jawaban
 Buat file bernama acl-bandwidth.conf di folder squid `nano /etc/squid/acl-bandwidth.conf` lalu masukkan
 
 ```
-delay_pools 1
+delay_pools 2
 delay_class 1 1
+delay_class 1 2
 delay_access 1 allow all
-delay_parameters 1 16000/16000
+delay_access 2 allow all
+delay_parameters 2 128000/128000 128000/128000
 ```
 
 Kemudian edit file `/etc/squid/squid.conf`
 
 ```
-include /etc/squid/acl.conf
 include /etc/squid/acl-bandwidth.conf
-
-http_port 8080
-visible_hostname Berlint
-
-http_access allow AVAILABLE_WORKING_1
-http_access allow AVAILABLE_WORKING_2
-http_access allow AVAILABLE_WORKING_3
-http_access deny all
 ```
 
 Coba kecepatan internet dengan speedtest
 
 ![image](images/8-4.png)
+
