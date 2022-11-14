@@ -209,7 +209,7 @@ http_access allow all
 ```
 
 ### Proxy Server Soal 2
-Adapun pada hari dan jam kerja sesuai nomor (1), client hanya dapat mengakses domain loid-work.com dan franky-work.com (IP tujuan domain dibebaskan)
+Adapun pada hari dan jam kerja sesuai nomor (1), client hanya dapat mengakses domain loid-work.com dan franky-work.com (IP tujuan domain dibebaskan) 
 
 ### Jawaban
 
