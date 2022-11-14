@@ -342,7 +342,7 @@ Coba jalankan
 
 ![image](images/8-2_1.png)
 
-### Proxy Server Soal 2
+### Proxy Server Soal 3
 Saat akses internet dibuka, client dilarang untuk mengakses web tanpa HTTPS. (Contoh web HTTP: http://example.com)
 
 ### Jawaban
